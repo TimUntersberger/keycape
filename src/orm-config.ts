@@ -2,6 +2,7 @@ import Account from "./entity/Account";
 import Privilege from "./entity/Privilege";
 import Role from "./entity/Role";
 import BaseEntity from "./entity/BaseEntity";
+import path from "path";
 
 const host = process.env.KEYCAPE_DB_HOST || "localhost";
 const port = process.env.KEYCAPE_DB_PORT || "5432";
@@ -16,5 +17,8 @@ export default {
   user,
   password,
   dbName,
-  type: "postgresql"
+  type: "postgresql",
+  migrations: {
+    path: path.join(__dirname, "../migrations")
+  }
 };

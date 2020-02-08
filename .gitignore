@@ -2,3 +2,5 @@ node_modules
 temp
 config.yaml
 profile.log
+tsconfig.tsbuildinfo
+dist

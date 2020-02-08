@@ -16,6 +16,7 @@ import fs from "fs";
 const app = express();
 const port = process.env.KEYCAPE_PORT || 8080;
 const jwtSecret = process.env.KEYCAPE_JWT_SECRET || "secret";
+const autoMigrate = process.env.KEYCAPE_AUTO_MIGRATE || true;
 
 type Config = {
   accounts?: {
@@ -85,7 +86,11 @@ async function persistConfig(config: Config) {
   console.log();
 }
 
-MikroORM.init(OrmConfig).then(async orm => {
+MikroORM.init(OrmConfig as any).then(async orm => {
+  const migrator = orm.getMigrator();
+
+  if (autoMigrate) await migrator.up();
+
   Container.set("orm", orm);
   Container.set(AccountRepository, orm.em.getRepository(Account));
   Container.set(RoleRepository, orm.em.getRepository(Role));
