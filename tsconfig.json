@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "target": "ES6",
+    "experimentalDecorators": true,
+    "esModuleInterop": true
+  }
+}
