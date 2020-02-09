@@ -5,7 +5,7 @@ import BaseEntity from "./BaseEntity";
 @Entity()
 export default class OAuth2Connection extends BaseEntity {
   @Property()
-  googleId: string;
+  providerId: string;
 
   @Property()
   refreshToken: string;
@@ -16,9 +16,9 @@ export default class OAuth2Connection extends BaseEntity {
   @ManyToOne()
   account: Account;
 
-  constructor(googleId: string, refreshToken: string, provider: "google") {
+  constructor(providerId: string, refreshToken: string, provider: "google") {
     super();
-    this.googleId = googleId;
+    this.providerId = providerId;
     this.refreshToken = refreshToken;
     this.provider = provider;
   }
