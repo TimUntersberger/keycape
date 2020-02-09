@@ -1,8 +1,18 @@
-import { Entity, Property, BeforeCreate, ManyToOne } from "mikro-orm";
+import {
+  Entity,
+  Property,
+  BeforeCreate,
+  ManyToOne,
+  Collection,
+  OneToMany
+} from "mikro-orm";
 import Role from "./Role";
 import RoleRepository from "../repository/RoleRepository";
 import Container from "typedi";
 import BaseEntity from "./BaseEntity";
+import OAuth2Connection from "./OAuth2Connection";
+
+const defaultRole = process.env.KEYCAPE_DEFAULT_ROLE || "Admin";
 
 @Entity()
 export default class Account extends BaseEntity {
@@ -20,6 +30,12 @@ export default class Account extends BaseEntity {
   @ManyToOne()
   role!: Role;
 
+  @OneToMany(
+    () => OAuth2Connection,
+    c => c.account
+  )
+  oauth2Connections = new Collection<OAuth2Connection>(this);
+
   constructor(username: string, email: string, password: string, role: Role) {
     super();
     this.username = username;
@@ -31,9 +47,9 @@ export default class Account extends BaseEntity {
   @BeforeCreate()
   async beforeCreate() {
     if (!this.role) {
-      this.role = await Container.get(RoleRepository).findOne({
-        name: "Admin"
-      });
+      this.role = await Container.get(RoleRepository).findOneByName(
+        defaultRole
+      );
     }
   }
 }
