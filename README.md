@@ -12,6 +12,34 @@
 * `KEYCAPE_OAUTH_SECRET`
 * `KEYCAPE_DEFAULT_ROLE`
 
+## Example docker-compose.yml
+
+```yaml
+version: '3'
+services:
+  keycape:
+    image: baaka/keycape
+    ports:
+      - '8080:8080'
+    environment:
+      - KEYCAPE_DB_HOST=db
+      - KEYCAPE_DB_PORT=5432
+      - KEYCAPE_DB_NAME=db
+      - KEYCAPE_JWT_SECRET=secret
+      - KEYCAPE_DB_USERNAME=postgres
+      - KEYCAPE_DB_PASSWORD=password
+    volumes:
+      - ./config.yaml:/app/config.yaml
+    depends_on:
+      - db
+  db:
+    image: postgres:12
+    ports:
+      - '5432:5432'
+    environment:
+      - POSTGRES_PASSWORD=password
+```
+
 ## Config
 
 example config.yaml
