@@ -262,11 +262,7 @@ MikroORM.init(OrmConfig as any).then(async orm => {
 
       const conn = new OAuth2Connection(
         account.password,
-        token.token.access_token,
         token.token.refresh_token,
-        token.token.expires_in,
-        token.token.token_type,
-        token.token.expires_at,
         "google"
       );
 
