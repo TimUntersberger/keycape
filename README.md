@@ -1,3 +1,12 @@
+[![](https://img.shields.io/docker/cloud/build/baaka/keycape)](https://hub.docker.com/r/baaka/keycape/builds)  
+# Keycape
+
+An authentication server that provides a preconfigured way to use oauth2 providers.
+
+## Supported oauth2 providers (WIP)
+
+* google
+
 ## List of environment variables
 
 * `KEYCAPE_DOMAIN`
