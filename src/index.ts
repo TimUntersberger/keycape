@@ -122,6 +122,7 @@ MikroORM.init(OrmConfig as any).then(async orm => {
   app.use(await import("./route/privilege").then(x => x.default));
   app.use(await import("./route/auth").then(x => x.default));
   app.use(await import("./route/oauth2-google").then(x => x.default));
+  app.use(await import("./route/oauth2-github").then(x => x.default));
 
   app.listen(port, "0.0.0.0", () => console.log("Listening on port " + port));
 });

@@ -16,7 +16,7 @@ const oauth2Secret = Container.get<string>("oauth2Secret");
 function createGoogleId(id: any) {
   return crypto
     .createHmac("sha256", oauth2Secret)
-    .update(id)
+    .update(String(id))
     .digest("base64");
 }
 
@@ -64,7 +64,7 @@ router.get("/oauth2/google/signin/callback", async (req, res) => {
 
     const googleId = createGoogleId(data.id);
 
-    const conn = await connRepo.findOneByGoogleId(googleId);
+    const conn = await connRepo.findOneByProviderId(googleId);
 
     res.cookie("refresh_token", createRefreshToken(conn.account));
     res.redirect("http://localhost:8080/account");
@@ -118,6 +118,7 @@ router.get("/oauth2/google/signup/callback", async (req, res) => {
     const conn = new OAuth2Connection(
       account.password,
       token.token.refresh_token,
+      null,
       "google"
     );
 

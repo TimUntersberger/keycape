@@ -13,6 +13,15 @@ router.get("/role", async (_req, res) => {
   res.json(roles);
 });
 
+router.get("/role/:id", async (req, res) => {
+  const id = +req.query.id;
+  const repo = Container.get(RoleRepository);
+
+  const roles = await repo.findOne({ id });
+
+  res.json(roles);
+});
+
 router.post("/role", async (req, res) => {
   const repo = Container.get(RoleRepository);
 

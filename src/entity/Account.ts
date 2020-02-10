@@ -21,7 +21,9 @@ export default class Account extends BaseEntity {
   })
   username: string;
 
-  @Property()
+  @Property({
+    nullable: true
+  })
   email: string;
 
   @Property()
