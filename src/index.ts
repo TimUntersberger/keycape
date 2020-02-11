@@ -11,6 +11,7 @@ import Privilege from "./entity/Privilege";
 import cookieParser from "cookie-parser";
 import yaml from "yaml";
 import fs from "fs";
+import joi from "joi";
 import OAuth2ConnectionRepository from "./repository/OAuth2ConnectionRepository";
 import OAuth2Connection from "./entity/OAuth2Connection";
 
@@ -22,6 +23,27 @@ const autoMigrate = Boolean(process.env.KEYCAPE_AUTO_MIGRATE) || true;
 const oauth2Secret = process.env.KEYCAPE_OAUTH_SECRET || "secret";
 
 type Config = {
+  domain?: string;
+  port?: number;
+  defaultRole: string;
+  autoMigrate?: boolean;
+
+  jwt: {
+    secret: string;
+  };
+
+  db: {
+    host?: string;
+    port?: number;
+    dbname?: string;
+    username: string;
+    password: string;
+  };
+
+  oauth2: {
+    providerIdSecret: string;
+  };
+
   accounts?: {
     username: string;
     email: string;
@@ -36,6 +58,78 @@ type Config = {
 
   privileges?: string[];
 };
+
+function loadConfig(): Config {
+  const config: Config = yaml.parse(
+    fs.readFileSync("config.yaml", { encoding: "UTF8" })
+  );
+
+  const configSchema = joi.object({
+    domain: joi.string().default("localhost"),
+    port: joi.number().required(),
+    defaultRole: joi.string().required(),
+    autoMigrate: joi.boolean().default(true),
+    jwt: joi
+      .object({
+        secret: joi.string().required()
+      })
+      .required(),
+    db: joi
+      .object({
+        host: joi.string().default("localhost"),
+        port: joi.number().default(5432),
+        dbname: joi.string(),
+        username: joi.string().required(),
+        password: joi.string().required()
+      })
+      .required(),
+    oauth2: joi
+      .object({
+        providerIdSecret: joi.string().required()
+      })
+      .required(),
+    accounts: joi
+      .array()
+      .items(
+        joi.object({
+          username: joi.string().required(),
+          email: joi
+            .string()
+            .email()
+            .required(),
+          password: joi.string().required(),
+          role: joi.string()
+        })
+      )
+      .default([]),
+    roles: joi
+      .array()
+      .items(
+        joi.object({
+          name: joi.string().required(),
+          privileges: joi
+            .array()
+            .items(joi.string())
+            .required()
+        })
+      )
+      .default([]),
+    privileges: joi
+      .array()
+      .items(joi.string())
+      .default([])
+  });
+
+  const validationResult = configSchema.validate(config);
+
+  if (validationResult.error) {
+    console.log(validationResult.error.details[0].message);
+
+    return null;
+  }
+
+  return config;
+}
 
 async function persistConfig(config: Config) {
   const privRepo = Container.get(PrivilegeRepository);
@@ -91,6 +185,12 @@ async function persistConfig(config: Config) {
 }
 
 MikroORM.init(OrmConfig as any).then(async orm => {
+  const config = loadConfig();
+
+  if (!config) {
+    return;
+  }
+
   const migrator = orm.getMigrator();
 
   if (autoMigrate) await migrator.up();
@@ -109,9 +209,7 @@ MikroORM.init(OrmConfig as any).then(async orm => {
     orm.em.getRepository(OAuth2Connection)
   );
 
-  await persistConfig(
-    yaml.parse(fs.readFileSync("config.yaml", { encoding: "UTF8" }))
-  );
+  await persistConfig(config);
 
   app.use((_req, _res, next) => RequestContext.create(orm.em, next));
   app.use(express.json());
