@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "emitDecoratorMetadata": true,
     "outDir": "dist",
     "module": "CommonJS",
     "moduleResolution": "node",

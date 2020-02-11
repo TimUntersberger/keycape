@@ -7,53 +7,31 @@ An authentication server that provides a preconfigured way to use oauth2 provide
 
 * google
 
-## List of environment variables
-
-* `KEYCAPE_DOMAIN`
-* `KEYCAPE_PORT`
-* `KEYCAPE_JWT_SECRET`
-* `KEYCAPE_DB_HOST`
-* `KEYCAPE_DB_PORT`
-* `KEYCAPE_DB_NAME`
-* `KEYCAPE_DB_USERNAME`
-* `KEYCAPE_DB_PASSWORD`
-* `KEYCAPE_AUTO_MIGRATE`
-* `KEYCAPE_OAUTH_SECRET`
-* `KEYCAPE_DEFAULT_ROLE`
-
-## Example docker-compose.yml
+## config.yaml
 
 ```yaml
-version: '3'
-services:
-  keycape:
-    image: baaka/keycape
-    ports:
-      - '8080:8080'
-    environment:
-      - KEYCAPE_DB_HOST=db
-      - KEYCAPE_DB_PORT=5432
-      - KEYCAPE_DB_NAME=db
-      - KEYCAPE_JWT_SECRET=secret
-      - KEYCAPE_DB_USERNAME=postgres
-      - KEYCAPE_DB_PASSWORD=password
-    volumes:
-      - ./config.yaml:/app/config.yaml
-    depends_on:
-      - db
-  db:
-    image: postgres:12
-    ports:
-      - '5432:5432'
-    environment:
-      - POSTGRES_PASSWORD=password
-```
-
-## Config
-
-example config.yaml
-
-```YAML
+defaultRole: Admin # the role that gets assigned to every account where the role is not defined
+domain: localhost # domainname of the server hosting the keycape server
+port: 8080 # port of the keycape server
+autoMigrate: true # whether to migrate on startup. Should be turned off in production
+jwt:
+  secret: secret # secret used to hash the authentication JWT
+db:
+  host: localhost
+  port: 5432
+  dbname: admin
+  username: admin
+  password: admin
+oauth2:
+  providerIdSecret: secret # used to salt the hashed id of the oauth2 connection. The result is used as password and id
+  providers:
+    - provider: google
+      id: "345i0345jfkgjd02jj0i4503" # id given by provider
+      secret: "0252ujksdl;fjk234i0" # secret given by provider
+      scopes: # any additional scopes you need
+        - everything
+        - idk
+#Everything below is optional to make sure that these entities exist on startup.
 accounts:
   - username: admin
     email: admin@admin.com
@@ -65,5 +43,25 @@ roles:
       - CreateUser
 privileges:
   - CreateUser
+```
 
+## Example docker-compose.yml
+
+```yaml
+version: '3'
+services:
+  keycape:
+    image: baaka/keycape
+    ports:
+      - '8080:8080'
+    volumes:
+      - ./config.yaml:/app/config.yaml
+    depends_on:
+      - db
+  db:
+    image: postgres:12
+    ports:
+      - '5432:5432'
+    environment:
+      - POSTGRES_PASSWORD=password
 ```
