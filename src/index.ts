@@ -1,6 +1,5 @@
 import express from "express";
 import { MikroORM, RequestContext } from "mikro-orm";
-import OrmConfig from "./orm-config";
 import { Container } from "typedi";
 import AccountRepository from "./repository/AccountRepository";
 import RoleRepository from "./repository/RoleRepository";
@@ -16,47 +15,48 @@ import OAuth2ConnectionRepository from "./repository/OAuth2ConnectionRepository"
 import OAuth2Connection from "./entity/OAuth2Connection";
 
 const app = express();
-const domain = process.env.KEYCAPE_DOMAIN || "localhost";
-const port = Number(process.env.KEYCAPE_PORT) || 8080;
-const jwtSecret = process.env.KEYCAPE_JWT_SECRET || "secret";
-const autoMigrate = Boolean(process.env.KEYCAPE_AUTO_MIGRATE) || true;
-const oauth2Secret = process.env.KEYCAPE_OAUTH_SECRET || "secret";
 
-type Config = {
-  domain?: string;
-  port?: number;
+export type Config = {
+  domain: string;
+  port: number;
   defaultRole: string;
-  autoMigrate?: boolean;
+  autoMigrate: boolean;
 
   jwt: {
     secret: string;
   };
 
   db: {
-    host?: string;
-    port?: number;
-    dbname?: string;
+    host: string;
+    port: number;
+    dbname: string;
     username: string;
     password: string;
   };
 
   oauth2: {
     providerIdSecret: string;
+    providers: {
+      provider: "google" | "github";
+      id: string;
+      secret: string;
+      scopes: string[];
+    }[];
   };
 
-  accounts?: {
+  accounts: {
     username: string;
     email: string;
     password: string;
     role: string;
   }[];
 
-  roles?: {
+  roles: {
     name: string;
     privileges: string[];
   }[];
 
-  privileges?: string[];
+  privileges: string[];
 };
 
 function loadConfig(): Config {
@@ -64,30 +64,64 @@ function loadConfig(): Config {
     fs.readFileSync("config.yaml", { encoding: "UTF8" })
   );
 
+  const defaultConfig = {
+    domain: "localhost",
+    port: 8080,
+    autoMigrate: true,
+    jwt: {
+      secret: "secret"
+    },
+    db: {
+      host: "localhost",
+      port: 5432
+    },
+    oauth2: {
+      secret: "secret"
+    },
+    accounts: [],
+    roles: [],
+    privileges: []
+  };
+
   const configSchema = joi.object({
-    domain: joi.string().default("localhost"),
-    port: joi.number().required(),
+    domain: joi.string().default(defaultConfig.domain),
+    port: joi.number().default(defaultConfig.port),
     defaultRole: joi.string().required(),
-    autoMigrate: joi.boolean().default(true),
+    autoMigrate: joi.boolean().default(defaultConfig.autoMigrate),
     jwt: joi
       .object({
-        secret: joi.string().required()
+        secret: joi.string().default(defaultConfig.jwt.secret)
       })
-      .required(),
+      .default(defaultConfig.jwt),
     db: joi
       .object({
-        host: joi.string().default("localhost"),
-        port: joi.number().default(5432),
-        dbname: joi.string(),
+        host: joi.string().default(defaultConfig.db.host),
+        port: joi.number().default(defaultConfig.db.port),
+        dbname: joi.string().required(),
         username: joi.string().required(),
         password: joi.string().required()
       })
       .required(),
-    oauth2: joi
-      .object({
-        providerIdSecret: joi.string().required()
-      })
-      .required(),
+    oauth2: joi.object({
+      providerIdSecret: joi.string().default(defaultConfig.oauth2.secret),
+      providers: joi
+        .array()
+        .items(
+          joi.object({
+            provider: joi
+              .string()
+              .valid(["google", "github"])
+              .required(),
+            id: joi.string().required(),
+            secret: joi.string().required(),
+            scopes: joi
+              .array()
+              .items(joi.string())
+              .default([])
+          })
+        )
+        .default([])
+    }),
     accounts: joi
       .array()
       .items(
@@ -101,7 +135,7 @@ function loadConfig(): Config {
           role: joi.string()
         })
       )
-      .default([]),
+      .default(defaultConfig.accounts),
     roles: joi
       .array()
       .items(
@@ -113,22 +147,25 @@ function loadConfig(): Config {
             .required()
         })
       )
-      .default([]),
+      .default(defaultConfig.roles),
     privileges: joi
       .array()
       .items(joi.string())
-      .default([])
+      .default(defaultConfig.privileges)
   });
 
   const validationResult = configSchema.validate(config);
 
   if (validationResult.error) {
-    console.log(validationResult.error.details[0].message);
-
+    console.log();
+    validationResult.error.details
+      .map(d => `ERROR: ${d.message}`)
+      .forEach(x => console.log(x));
+    console.log();
     return null;
   }
 
-  return config;
+  return validationResult.value;
 }
 
 async function persistConfig(config: Config) {
@@ -184,43 +221,48 @@ async function persistConfig(config: Config) {
   console.log();
 }
 
-MikroORM.init(OrmConfig as any).then(async orm => {
-  const config = loadConfig();
+const config = loadConfig();
 
-  if (!config) {
-    return;
-  }
+if (!config) {
+  process.exit(1);
+}
 
-  const migrator = orm.getMigrator();
+Container.set("config", config);
 
-  if (autoMigrate) await migrator.up();
+import("./orm-config").then(ormConfig => {
+  MikroORM.init(ormConfig.default as any).then(async orm => {
+    const migrator = orm.getMigrator();
 
-  Container.set("domain", domain);
-  Container.set("port", port);
-  Container.set("jwtSecret", jwtSecret);
-  Container.set("oauth2Secret", oauth2Secret);
+    if (config.autoMigrate) await migrator.up();
 
-  Container.set("orm", orm);
-  Container.set(AccountRepository, orm.em.getRepository(Account));
-  Container.set(RoleRepository, orm.em.getRepository(Role));
-  Container.set(PrivilegeRepository, orm.em.getRepository(Privilege));
-  Container.set(
-    OAuth2ConnectionRepository,
-    orm.em.getRepository(OAuth2Connection)
-  );
+    Container.set("orm", orm);
+    Container.set(AccountRepository, orm.em.getRepository(Account));
+    Container.set(RoleRepository, orm.em.getRepository(Role));
+    Container.set(PrivilegeRepository, orm.em.getRepository(Privilege));
+    Container.set(
+      OAuth2ConnectionRepository,
+      orm.em.getRepository(OAuth2Connection)
+    );
 
-  await persistConfig(config);
+    await persistConfig(config);
 
-  app.use((_req, _res, next) => RequestContext.create(orm.em, next));
-  app.use(express.json());
-  app.use(cookieParser());
+    app.use((_req, _res, next) => RequestContext.create(orm.em, next));
+    app.use(express.json());
+    app.use(cookieParser());
 
-  app.use(await import("./route/account").then(x => x.default));
-  app.use(await import("./route/role").then(x => x.default));
-  app.use(await import("./route/privilege").then(x => x.default));
-  app.use(await import("./route/auth").then(x => x.default));
-  app.use(await import("./route/oauth2-google").then(x => x.default));
-  app.use(await import("./route/oauth2-github").then(x => x.default));
+    app.use(await import("./route/account").then(x => x.default));
+    app.use(await import("./route/role").then(x => x.default));
+    app.use(await import("./route/privilege").then(x => x.default));
+    app.use(await import("./route/auth").then(x => x.default));
+    if (config.oauth2) {
+      if (config.oauth2.providers.some(p => p.provider === "google"))
+        app.use(await import("./route/oauth2-google").then(x => x.default));
+      if (config.oauth2.providers.some(p => p.provider === "github"))
+        app.use(await import("./route/oauth2-github").then(x => x.default));
+    }
 
-  app.listen(port, "0.0.0.0", () => console.log("Listening on port " + port));
+    app.listen(config.port, "0.0.0.0", () =>
+      console.log("Listening on port " + config.port)
+    );
+  });
 });

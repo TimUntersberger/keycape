@@ -8,8 +8,9 @@ import oauth2 from "simple-oauth2";
 import OAuth2ConnectionRepository from "./repository/OAuth2ConnectionRepository";
 import AccountRepository from "./repository/AccountRepository";
 import OAuth2Connection from "./entity/OAuth2Connection";
+import { Config } from ".";
 
-const jwtSecret = Container.get<string>("jwtSecret");
+const jwtSecret = Container.get<Config>("config").jwt.secret;
 
 export function createAccessToken(account: Account) {
   return (
@@ -37,13 +38,11 @@ export function createRefreshToken(account: Account) {
   );
 }
 
-const oauth2Secret = Container.get<string>("oauth2Secret");
-const domain = Container.get<string>("domain");
-const port = Container.get<number>("port");
+const config = Container.get<Config>("config");
 
 function createProviderId(id: any) {
   return crypto
-    .createHmac("sha256", oauth2Secret)
+    .createHmac("sha256", config.oauth2.providerIdSecret)
     .update(String(id))
     .digest("base64");
 }
@@ -93,7 +92,7 @@ export function createOAuth2ProviderRoute(
 
   router.get(`/oauth2/${provider}/signin`, async (_req, res) => {
     const authorizationUrl = oauth2Provider.authorizationCode.authorizeURL({
-      redirect_uri: `http://${domain}:${port}/oauth2/${provider}/signin/callback`,
+      redirect_uri: `http://${config.domain}:${config.port}/oauth2/${provider}/signin/callback`,
       scope: scopes
     });
 
@@ -107,7 +106,7 @@ export function createOAuth2ProviderRoute(
     try {
       const result = await oauth2Provider.authorizationCode.getToken({
         code,
-        redirect_uri: `http://${domain}:${port}/oauth2/${provider}/signin/callback`
+        redirect_uri: `http://${config.domain}:${config.port}/oauth2/${provider}/signin/callback`
       });
 
       const token = oauth2Provider.accessToken.create(result);
@@ -146,7 +145,7 @@ export function createOAuth2ProviderRoute(
     try {
       const result = await oauth2Provider.authorizationCode.getToken({
         code,
-        redirect_uri: `http://${domain}:${port}/oauth2/${provider}/signup/callback`
+        redirect_uri: `http://${config.domain}:${config.port}/oauth2/${provider}/signup/callback`
       });
 
       const token = oauth2Provider.accessToken.create(result);

@@ -4,9 +4,10 @@ import AccountRepository from "../repository/AccountRepository";
 import jwt from "jsonwebtoken";
 import Account from "../entity/Account";
 import { createRefreshToken, createAccessToken } from "../oauth2";
+import { Config } from "..";
 
 const app = express.Router();
-const jwtSecret = Container.get<string>("jwtSecret");
+const jwtSecret = Container.get<Config>("config").jwt.secret;
 
 app.get("/auth/refresh", async (req, res) => {
   const repo = Container.get(AccountRepository);
