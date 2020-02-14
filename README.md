@@ -6,6 +6,7 @@ An authentication server that provides a preconfigured way to use oauth2 provide
 ## Supported oauth2 providers (WIP)
 
 * google
+* github
 
 ## config.yaml
 
