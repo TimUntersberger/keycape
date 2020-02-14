@@ -1,12 +1,6 @@
 [![](https://img.shields.io/docker/cloud/build/baaka/keycape)](https://hub.docker.com/r/baaka/keycape/builds)  
 # Keycape
 
-## TODO
-
-* Think about the current accesstoken payload. Maybe we should only send the id of the account instead of the whole account.
-* Rename Privilege to Scope (To align more to the oauth2 spec)
-* Support either accesstoken or refreshtoken invalidation (most likely by using a blacklist in redis)
-
 An authentication server that provides a preconfigured way to use oauth2 providers.
 
 ## Supported oauth2 providers (WIP)
