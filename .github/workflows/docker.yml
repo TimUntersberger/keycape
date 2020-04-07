@@ -12,8 +12,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Build Docker Image
-        run: docker build $GITHUB_WORKSPACE -t $DOCKER_IMAGE_NAME
+        run: docker build $GITHUB_WORKSPACE -t $DOCKER_USERNAME/$DOCKER_IMAGE_NAME
       - name: Login to Docker Hub
         run: docker login --username=$DOCKER_USERNAME --password=${{ secrets.DOCKER_PASSWORD }}
       - name: Push to Docker Hub
-        run: docker push $DOCKER_IMAGE_NAME
+        run: docker push $DOCKER_USERNAME/$DOCKER_IMAGE_NAME
