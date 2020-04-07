@@ -7,9 +7,9 @@ on:
   push:
     branches: [ master ]
     paths-ignore: 
-      - README.md
-      - docs/
-      - .github/
+      - "README.md"
+      - "docs/**"
+      - ".github/**"
 jobs:
   build:
     runs-on: [ubuntu-latest]
