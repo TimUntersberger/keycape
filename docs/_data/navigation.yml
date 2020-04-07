@@ -1,6 +1,6 @@
 main:
   - title: "Documentation"
-    url: /documentation/
+    url: /documentation
 docs:
   - title: "Getting Started"
     children:
