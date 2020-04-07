@@ -1,5 +1,4 @@
 ---
-layout: single
 ---
 
 hello world
