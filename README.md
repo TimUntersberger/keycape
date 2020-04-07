@@ -1,3 +1,4 @@
+![Docker](https://github.com/TimUntersberger/keycape/workflows/Docker/badge.svg?branch=master)
 # Keycape
 
 An authentication server that provides a preconfigured way to use oauth2 providers.
