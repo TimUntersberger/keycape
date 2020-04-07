@@ -1,4 +1,5 @@
 ---
+title: test
 sidebar:
   nav: "docs"
 ---
