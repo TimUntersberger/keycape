@@ -4,9 +4,9 @@ main:
 docs:
   - title: "Getting Started"
     children:
-      - title: Supported OAuth2 Providers
+      - title: "Supported OAuth2 Providers"
         url: /documentation/getting-started/supported-oauth2-providers
   - title: "API"
     children:
-      - title: Authentication
+      - title: "Authentication"
         url: /documentation/api/authentication
