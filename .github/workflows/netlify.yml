@@ -2,9 +2,11 @@ name: Netlify
 on:
   push:
     branches: [ master ]
+    paths:
+      - "website/**"
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
     - name: Run a one-line script
-      run: curl -X POST -d {} ${{ NETLIFY_BUILD_HOOK }}
+      run: curl -X POST -d {} ${{ secrets.NETLIFY_BUILD_HOOK }}
