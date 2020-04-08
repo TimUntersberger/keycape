@@ -1,0 +1,10 @@
+name: Netlify
+on:
+  push:
+    branches: [ master ]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Run a one-line script
+      run: curl -X POST -d {} ${{ NETLIFY_BUILD_HOOK }}
