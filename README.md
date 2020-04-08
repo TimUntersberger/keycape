@@ -1,4 +1,5 @@
 ![Docker](https://github.com/TimUntersberger/keycape/workflows/Docker/badge.svg?branch=master)
+[![Netlify Status](https://api.netlify.com/api/v1/badges/f4b45f35-0fee-4bb2-8348-fb4b24be8c61/deploy-status)](https://app.netlify.com/sites/keycape/deploys)
 # Keycape
 
 An authentication server that provides a preconfigured way to use oauth2 providers.
