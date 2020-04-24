@@ -31,9 +31,6 @@ oauth2:
     - provider: google
       id: "345i0345jfkgjd02jj0i4503" # id given by provider
       secret: "0252ujksdl;fjk234i0" # secret given by provider
-      scopes: # any additional scopes you need
-        - everything
-        - idk
 #Everything below is optional to make sure that these entities exist on startup.
 accounts:
   - username: admin
