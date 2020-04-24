@@ -10,12 +10,6 @@ on:
       - "README.md"
       - "website/**"
       - ".github/**"
-  pull_request:
-    branches: [ master ]
-    paths-ignore: 
-      - "README.md"
-      - "website/**"
-      - ".github/**"
 jobs:
   build:
     runs-on: [ubuntu-latest]
