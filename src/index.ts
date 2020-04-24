@@ -12,7 +12,7 @@ import yaml from "yaml";
 import fs from "fs";
 import OAuth2ConnectionRepository from "./repository/OAuth2ConnectionRepository";
 import OAuth2Connection from "./entity/OAuth2Connection";
-import { validateConfig, Config } from "./config";
+import { validateConfig, Config, loadPreviousConfig } from "./config";
 
 const app = express();
 
@@ -39,53 +39,126 @@ async function persistConfig(config: Config) {
   const privRepo = Container.get(PrivilegeRepository);
   const roleRepo = Container.get(RoleRepository);
   const accRepo = Container.get(AccountRepository);
+  const prevConfig = loadPreviousConfig();
 
-  console.log();
+  const prevPrivileges = prevConfig?.privileges ?? [];
+  const currPrivileges = config.privileges ?? [];
+
+  await Promise.all(
+    prevPrivileges
+      .filter((p) => !currPrivileges.includes(p))
+      .map(async (p) => {
+        privRepo.remove({
+          name: p as any,
+        });
+      })
+  );
 
   await Promise.all(
     config.privileges?.map(async (p) => {
-      try {
-        return await privRepo.persistAndFlush(new Privilege(p));
-      } catch (err) {
-        console.log(`Privilege with name '${p}' already exists.`);
+      let priv = await privRepo.findOneByName(p);
+      if (priv) {
+        if (priv.name !== p) {
+          priv.name = p;
+        }
+      } else {
+        priv = new Privilege(p);
       }
+      await privRepo.persistAndFlush(priv);
     })
+  );
+
+  const prevRoles = prevConfig?.roles?.map((r) => r.name) ?? [];
+  const currRoles = config.roles?.map((r) => r.name) ?? [];
+
+  await Promise.all(
+    prevRoles
+      .filter((r) => !currRoles.includes(r))
+      .map(async (r) => {
+        roleRepo.remove({
+          name: r as any,
+        });
+      })
   );
 
   await Promise.all(
     config.roles?.map(async (r) => {
-      const role = new Role(r.name);
+      let role = await roleRepo.findOneByName(r.name);
 
-      try {
-        await roleRepo.persistAndFlush(role);
-
-        await role.privileges.init();
-
-        r.privileges.forEach(async (p) => {
-          role.privileges.add(await privRepo.findOneByName(p));
-        });
-
-        await roleRepo.persist(role);
-      } catch {
-        console.log(`Role with name '${r.name}' aleady exists.`);
+      if (role) {
+        if (role.name !== r.name) {
+          role.name = r.name;
+        }
+      } else {
+        role = new Role(r.name);
       }
+
+      await roleRepo.persistAndFlush(role);
+      await role.privileges.init();
+
+      const currentPrivileges = [...r.privileges];
+      const privilegesToRemove = [];
+
+      role.privileges.getItems().forEach((p) => {
+        if (!currentPrivileges.includes(p.name)) {
+          privilegesToRemove.push(p.name);
+        }
+        currentPrivileges.splice(currentPrivileges.indexOf(p.name), 1);
+      });
+
+      // currentPrivileges now only has the privileges that have to be added
+
+      await Promise.all(
+        currentPrivileges.map(async (p) => {
+          role.privileges.add(await privRepo.findOneByName(p));
+        })
+      );
+
+      await Promise.all(
+        privilegesToRemove.map(async (p) => {
+          role.privileges.remove(await privRepo.findOneByName(p));
+        })
+      );
+
+      await roleRepo.persist(role);
     })
+  );
+
+  const prevUsernames = prevConfig?.accounts?.map((a) => a.username) ?? [];
+  const currUsernames = config.accounts?.map((a) => a.username) ?? [];
+
+  await Promise.all(
+    prevUsernames
+      .filter((u) => !currUsernames.includes(u))
+      .map(async (u) => {
+        accRepo.remove({
+          username: u as any,
+        });
+      })
   );
 
   await Promise.all(
     config.accounts?.map(async (a) => {
       const role = await roleRepo.findOneByName(a.role);
-      const acc = new Account(a.username, a.email, a.password, role);
+      let acc = await accRepo.findOneByUsername(a.username);
 
-      try {
-        await accRepo.persistAndFlush(acc);
-      } catch {
-        console.log(`Account with username '${a.username}' already exists.`);
+      if (acc) {
+        if (acc.password !== a.password) {
+          acc.password = a.password;
+        }
+        if (acc.email !== a.email) {
+          acc.email = a.email;
+        }
+        if (acc.role.id !== role.id) {
+          acc.role = role;
+        }
+      } else {
+        acc = new Account(a.username, a.email, a.password, role);
       }
+
+      await accRepo.persistAndFlush(acc);
     })
   );
-
-  console.log();
 }
 
 const config = loadConfig();
@@ -111,7 +184,11 @@ import("./orm-config").then((ormConfig) => {
       orm.em.getRepository(OAuth2Connection)
     );
 
-    await persistConfig(config);
+    if (config.persistEntities) {
+      await persistConfig(config);
+    }
+
+    fs.copyFileSync("config.yaml", "config.prev.yaml");
 
     app.use((_req, _res, next) => RequestContext.create(orm.em, next));
     app.use(express.json());

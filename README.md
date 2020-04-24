@@ -17,6 +17,7 @@ defaultRole: Admin # the role that gets assigned to every account where the role
 domain: localhost # domainname of the server hosting the keycape server
 port: 8080 # port of the keycape server
 autoMigrate: true # whether to migrate on startup. Should be turned off in production
+persistConfig: true # whether to persist the defined entities on startup. Should be turned off in production
 jwt:
   secret: secret # secret used to hash the authentication JWT
 db:
