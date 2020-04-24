@@ -7,7 +7,8 @@ import path from "path";
 import OAuth2Connection from "./entity/OAuth2Connection";
 import { ReflectMetadataProvider } from "mikro-orm";
 import Container from "typedi";
-import { Config } from ".";
+import "./";
+import { Config } from "./config";
 
 const config = Container.get<Config>("config");
 
@@ -22,6 +23,6 @@ export default {
   type: "postgresql",
   metaDataProvider: ReflectMetadataProvider,
   migrations: {
-    path: path.join(__dirname, "../migrations")
-  }
+    path: path.join(__dirname, "../migrations"),
+  },
 };
