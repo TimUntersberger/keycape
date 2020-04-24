@@ -26,14 +26,11 @@ db:
   username: admin
   password: admin
 oauth2:
-  providerIdSecret: secret # used to salt the hashed id of the oauth2 connection. The result is used as password and id
+  secret: secret # used to salt the hash of the password
   providers:
     - provider: google
       id: "345i0345jfkgjd02jj0i4503" # id given by provider
       secret: "0252ujksdl;fjk234i0" # secret given by provider
-      scopes: # any additional scopes you need
-        - everything
-        - idk
 #Everything below is optional to make sure that these entities exist on startup.
 accounts:
   - username: admin

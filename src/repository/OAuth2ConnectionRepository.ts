@@ -8,7 +8,7 @@ export default class OAuth2ConnectionRepository extends EntityRepository<
   findOneByProviderId(providerId: string): Promise<OAuth2Connection> {
     return this.findOne(
       {
-        providerId
+        providerId: providerId as any,
       },
       ["account.role.privileges"]
     );
