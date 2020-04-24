@@ -14,12 +14,12 @@ router.get("/role", async (_req, res) => {
 });
 
 router.get("/role/:id", async (req, res) => {
-  const id = +req.query.id;
+  const id = req.params.id;
   const repo = Container.get(RoleRepository);
 
-  const roles = await repo.findOne({ id });
+  const role = await repo.findOne(Number(id) as any);
 
-  res.json(roles);
+  res.json(role);
 });
 
 router.post("/role", async (req, res) => {
@@ -38,9 +38,9 @@ router.post("/role/:roleId/privileges", async (req, res) => {
   const roleRepo = Container.get(RoleRepository);
   const privRepo = Container.get(PrivilegeRepository);
 
-  const role = await roleRepo.findOne(roleId as any);
+  const role = await roleRepo.findOne(Number(roleId) as any);
   const privileges = await privRepo.find({
-    "id:in": privilegeIds
+    "id:in": privilegeIds,
   } as any);
 
   await role.privileges.init();
@@ -56,7 +56,7 @@ router.get("/role/:roleId/privileges", async (req, res) => {
   const { roleId } = req.params;
   const roleRepo = Container.get(RoleRepository);
 
-  const role = await roleRepo.findOne(roleId as any);
+  const role = await roleRepo.findOne(Number(roleId) as any);
 
   await role.privileges.init();
 

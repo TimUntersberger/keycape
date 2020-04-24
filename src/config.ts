@@ -1,3 +1,5 @@
+import fs from "fs";
+import yaml from "yaml";
 import joi from "joi";
 import { Providers } from "./entity/OAuth2Connection";
 
@@ -6,6 +8,7 @@ export type Config = {
   port: number;
   defaultRole: string;
   autoMigrate: boolean;
+  persistEntities: boolean;
 
   jwt: {
     secret: string;
@@ -47,6 +50,7 @@ const defaultConfig = {
   domain: "localhost",
   port: 8080,
   autoMigrate: true,
+  persistEntities: true,
   jwt: {
     secret: "secret",
   },
@@ -67,6 +71,7 @@ const configSchema = joi.object({
   port: joi.number().default(defaultConfig.port),
   defaultRole: joi.string().required(),
   autoMigrate: joi.boolean().default(defaultConfig.autoMigrate),
+  persistEntities: joi.boolean().default(defaultConfig.persistEntities),
   jwt: joi
     .object({
       secret: joi.string().default(defaultConfig.jwt.secret),
@@ -117,7 +122,12 @@ const configSchema = joi.object({
   privileges: joi.array().items(joi.string()).default(defaultConfig.privileges),
 });
 
+export function loadPreviousConfig(): Config {
+  return fs.existsSync("config.prev.yaml")
+    ? yaml.parse(fs.readFileSync("config.prev.yaml", { encoding: "UTF8" }))
+    : {};
+}
+
 export function validateConfig(config: Config) {
   return configSchema.validate(config);
 }
-

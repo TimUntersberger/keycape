@@ -1,6 +1,7 @@
 node_modules
 temp
 config.yaml
+config.prev.yaml
 profile.log
 tsconfig.tsbuildinfo
 dist
