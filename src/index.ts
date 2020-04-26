@@ -120,7 +120,7 @@ async function persistConfig(config: Config) {
         })
       );
 
-      await roleRepo.persist(role);
+      await roleRepo.persistAndFlush(role);
     })
   );
 
