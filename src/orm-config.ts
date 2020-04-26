@@ -14,7 +14,7 @@ const config = Container.get<Config>("config");
 
 export default {
   entities: [Account, Role, Privilege, BaseEntity, OAuth2Connection],
-  // entitiesDirsTs: ["./src/entity"],
+  entitiesDirsTs: ["./src/entity"],
   host: config.db.host,
   port: config.db.port,
   user: config.db.username,
