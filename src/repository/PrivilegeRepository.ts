@@ -3,13 +3,13 @@ import Privilege from "../entity/Privilege";
 import Container, { Service } from "typedi";
 
 @Service({
-  factory: () => Container.get<any>("orm").getRepository(PrivilegeRepository)
+  factory: () => Container.get<any>("orm").getRepository(PrivilegeRepository),
 })
 @Repository(Privilege)
 export default class PrivilegeRepository extends EntityRepository<Privilege> {
   findOneByName(name: string): Promise<Privilege> {
     return this.findOne({
-      name
+      name,
     });
   }
 }

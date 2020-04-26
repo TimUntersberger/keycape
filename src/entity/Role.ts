@@ -6,7 +6,7 @@ import BaseEntity from "./BaseEntity";
 @Entity()
 export default class Role extends BaseEntity {
   @Property({
-    unique: true
+    unique: true,
   })
   name: string;
 
