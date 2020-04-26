@@ -23,6 +23,7 @@ export default {
   type: "postgresql",
   metaDataProvider: ReflectMetadataProvider,
   migrations: {
+    pattern: /^[\w-]+\d+\.(ts|js)$/,
     path: path.join(__dirname, "../migrations"),
   },
 };
