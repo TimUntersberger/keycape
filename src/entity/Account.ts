@@ -4,7 +4,7 @@ import {
   BeforeCreate,
   ManyToOne,
   Collection,
-  OneToMany
+  OneToMany,
 } from "mikro-orm";
 import Role from "./Role";
 import RoleRepository from "../repository/RoleRepository";
@@ -17,12 +17,12 @@ const defaultRole = process.env.KEYCAPE_DEFAULT_ROLE || "Admin";
 @Entity()
 export default class Account extends BaseEntity {
   @Property({
-    unique: true
+    unique: true,
   })
   username: string;
 
   @Property({
-    nullable: true
+    nullable: true,
   })
   email: string;
 
@@ -32,10 +32,7 @@ export default class Account extends BaseEntity {
   @ManyToOne()
   role!: Role;
 
-  @OneToMany(
-    () => OAuth2Connection,
-    c => c.account
-  )
+  @OneToMany(() => OAuth2Connection, (c) => c.account)
   oauth2Connections = new Collection<OAuth2Connection>(this);
 
   constructor(username: string, email: string, password: string, role: Role) {

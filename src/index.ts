@@ -169,44 +169,50 @@ if (!config) {
 
 Container.set("config", config);
 
-import("./orm-config").then((ormConfig) => {
-  MikroORM.init(ormConfig.default as any).then(async (orm) => {
-    const migrator = orm.getMigrator();
+/*
+ * Creating a migration throws a null pointer exception.
+ * Looks like MikroORM is not defined when using the mikro-orm CLI ??? idk tbh
+ * */
+if (MikroORM) {
+  import("./orm-config").then((ormConfig) => {
+    MikroORM.init(ormConfig.default as any).then(async (orm) => {
+      const migrator = orm.getMigrator();
 
-    if (config.autoMigrate) await migrator.up();
+      if (config.autoMigrate) await migrator.up();
 
-    Container.set("orm", orm);
-    Container.set(AccountRepository, orm.em.getRepository(Account));
-    Container.set(RoleRepository, orm.em.getRepository(Role));
-    Container.set(PrivilegeRepository, orm.em.getRepository(Privilege));
-    Container.set(
-      OAuth2ConnectionRepository,
-      orm.em.getRepository(OAuth2Connection)
-    );
+      Container.set("orm", orm);
+      Container.set(AccountRepository, orm.em.getRepository(Account));
+      Container.set(RoleRepository, orm.em.getRepository(Role));
+      Container.set(PrivilegeRepository, orm.em.getRepository(Privilege));
+      Container.set(
+        OAuth2ConnectionRepository,
+        orm.em.getRepository(OAuth2Connection)
+      );
 
-    if (config.persistEntities) {
-      await persistConfig(config);
-    }
+      if (config.persistEntities) {
+        await persistConfig(config);
+      }
 
-    fs.copyFileSync("config.yaml", "config.prev.yaml");
+      fs.copyFileSync("config.yaml", "config.prev.yaml");
 
-    app.use((_req, _res, next) => RequestContext.create(orm.em, next));
-    app.use(express.json());
-    app.use(cookieParser());
+      app.use((_req, _res, next) => RequestContext.create(orm.em, next));
+      app.use(express.json());
+      app.use(cookieParser());
 
-    app.use(await import("./route/account").then((x) => x.default));
-    app.use(await import("./route/role").then((x) => x.default));
-    app.use(await import("./route/privilege").then((x) => x.default));
-    app.use(await import("./route/auth").then((x) => x.default));
-    if (config.oauth2) {
-      if (config.oauth2.providers.some((p) => p.provider === "google"))
-        app.use(await import("./route/oauth2-google").then((x) => x.default));
-      if (config.oauth2.providers.some((p) => p.provider === "github"))
-        app.use(await import("./route/oauth2-github").then((x) => x.default));
-    }
+      app.use(await import("./route/account").then((x) => x.default));
+      app.use(await import("./route/role").then((x) => x.default));
+      app.use(await import("./route/privilege").then((x) => x.default));
+      app.use(await import("./route/auth").then((x) => x.default));
+      if (config.oauth2) {
+        if (config.oauth2.providers.some((p) => p.provider === "google"))
+          app.use(await import("./route/oauth2-google").then((x) => x.default));
+        if (config.oauth2.providers.some((p) => p.provider === "github"))
+          app.use(await import("./route/oauth2-github").then((x) => x.default));
+      }
 
-    app.listen(config.port, "0.0.0.0", () =>
-      console.log("Listening on port " + config.port)
-    );
+      app.listen(config.port, "0.0.0.0", () =>
+        console.log("Listening on port " + config.port)
+      );
+    });
   });
-});
+}
