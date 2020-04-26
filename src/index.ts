@@ -45,28 +45,22 @@ async function persistConfig(config: Config) {
   const currPrivileges = config.privileges ?? [];
 
   await Promise.all(
-    prevPrivileges
-      .filter((p) => !currPrivileges.includes(p))
-      .map(async (p) => {
-        privRepo.remove({
+    prevPrivileges.map(async (p) => {
+      if (!currPrivileges.includes(p)) {
+        await privRepo.remove({
           name: p as any,
         });
-      })
-  );
-
-  await Promise.all(
-    config.privileges?.map(async (p) => {
-      let priv = await privRepo.findOneByName(p);
-      if (priv) {
-        if (priv.name !== p) {
-          priv.name = p;
-        }
-      } else {
-        priv = new Privilege(p);
       }
-      await privRepo.persistAndFlush(priv);
     })
   );
+
+  currPrivileges.forEach((p) => {
+    if (!prevPrivileges.includes(p)) {
+      privRepo.persistLater(new Privilege(p));
+    }
+  });
+
+  await privRepo.flush();
 
   const prevRoles = prevConfig?.roles?.map((r) => r.name) ?? [];
   const currRoles = config.roles?.map((r) => r.name) ?? [];
@@ -81,19 +75,18 @@ async function persistConfig(config: Config) {
       })
   );
 
+  currRoles.forEach((r) => {
+    if (!prevRoles.includes(r)) {
+      roleRepo.persistLater(new Role(r));
+    }
+  });
+
+  await roleRepo.flush();
+
   await Promise.all(
     config.roles?.map(async (r) => {
       let role = await roleRepo.findOneByName(r.name);
 
-      if (role) {
-        if (role.name !== r.name) {
-          role.name = r.name;
-        }
-      } else {
-        role = new Role(r.name);
-      }
-
-      await roleRepo.persistAndFlush(role);
       await role.privileges.init();
 
       const currentPrivileges = [...r.privileges];
@@ -105,8 +98,6 @@ async function persistConfig(config: Config) {
         }
         currentPrivileges.splice(currentPrivileges.indexOf(p.name), 1);
       });
-
-      // currentPrivileges now only has the privileges that have to be added
 
       await Promise.all(
         currentPrivileges.map(async (p) => {
@@ -120,9 +111,11 @@ async function persistConfig(config: Config) {
         })
       );
 
-      await roleRepo.persistAndFlush(role);
+      roleRepo.persistLater(role);
     })
   );
+
+  await roleRepo.flush();
 
   const prevUsernames = prevConfig?.accounts?.map((a) => a.username) ?? [];
   const currUsernames = config.accounts?.map((a) => a.username) ?? [];
@@ -178,7 +171,7 @@ if (MikroORM) {
     MikroORM.init(ormConfig.default as any).then(async (orm) => {
       const migrator = orm.getMigrator();
 
-      if (config.autoMigrate) await migrator.up();
+      if (config.autoMigrate) await migrator.up().catch(() => {});
 
       Container.set("orm", orm);
       Container.set(AccountRepository, orm.em.getRepository(Account));

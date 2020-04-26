@@ -1,5 +1,5 @@
 FROM node:13
-WORKDIR app
+WORKDIR /app
 COPY package.json .
 COPY package-lock.json .
 RUN npm ci

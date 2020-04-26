@@ -5,8 +5,11 @@
   "license": "MIT",
   "scripts": {
     "start": "ts-node src/index.ts",
-    "build": "tsc -t ES6",
-    "orm": "mikro-orm"
+    "fresh:start": "rm config.prev.yaml; docker-compose down && docker-compose up -d && npm start",
+    "build": "tsc",
+    "orm": "mikro-orm",
+    "migration:create": "mikro-orm migration:create",
+    "fresh:migration:create": "rm -rf migrations; rm -rf temp; mikro-orm migration:create"
   },
   "dependencies": {
     "@types/jsonwebtoken": "^8.3.7",

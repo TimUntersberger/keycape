@@ -20,6 +20,7 @@ export default {
   user: config.db.username,
   password: config.db.password,
   dbName: config.db.dbname,
+  debug: true,
   type: "postgresql",
   metaDataProvider: ReflectMetadataProvider,
   migrations: {
