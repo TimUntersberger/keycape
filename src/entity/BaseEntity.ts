@@ -5,12 +5,12 @@ export default abstract class BaseEntity implements IdEntity<{ id: number }> {
   id!: number;
 
   @Property({
-    default: "now()"
+    default: "now()",
   })
   createdAt: Date;
 
   @Property({
-    default: "now()"
+    default: "now()",
   })
   updatedAt: Date;
 

@@ -2,7 +2,7 @@ import { Entity, Property } from "mikro-orm";
 import BaseEntity from "./BaseEntity";
 
 @Entity()
-export default class Scope extends BaseEntity {
+export default class Privilege extends BaseEntity {
   @Property({
     unique: true,
   })
